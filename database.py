@@ -10,12 +10,21 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 def normalize_database_url(raw_url: str) -> str:
     """Convert a PostgreSQL URL to asyncpg-compatible form."""
+    if not raw_url or not raw_url.strip():
+        raise ValueError("DATABASE_URL is empty. Check your .env file or Vercel Environment Variables.")
+
     url = raw_url.strip()
 
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     elif url.startswith("postgresql+psycopg://"):
         url = url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+
+    if not url.startswith("postgresql+asyncpg://"):
+        raise ValueError(
+            "DATABASE_URL must use a PostgreSQL async driver format like "
+            "postgresql+asyncpg://..."
+        )
 
     parsed = urlsplit(url)
     query_params = parse_qsl(parsed.query, keep_blank_values=True)
@@ -37,12 +46,14 @@ def normalize_database_url(raw_url: str) -> str:
     return urlunsplit(parsed._replace(query=rebuilt_query))
 
 
-DATABASE_URL = normalize_database_url(
-    os.getenv(
-        "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/rangmanch",
+raw_database_url = os.getenv("DATABASE_URL")
+if not raw_database_url:
+    raise RuntimeError(
+        "DATABASE_URL is missing. Add it in your .env file or Vercel Environment Variables. "
+        "Example: postgresql+asyncpg://user:password@host:5432/dbname"
     )
-)
+
+DATABASE_URL = normalize_database_url(raw_database_url)
 
 engine_kwargs = {"echo": True}
 if "neon.tech" in DATABASE_URL or "ssl=true" in DATABASE_URL.lower():
