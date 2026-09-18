@@ -9,7 +9,7 @@ from service.menu import router as menu_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Lifespan started")
-    create_tables()
+    await create_tables()
     print("Database tables created")
     yield
     # shutdown: cleanup here
