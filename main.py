@@ -7,6 +7,7 @@ from service.auth import FRONTEND_ORIGINS, router as auth_router
 from service.menu import router as menu_router
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Lifespan started")
